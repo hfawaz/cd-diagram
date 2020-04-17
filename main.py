@@ -23,7 +23,7 @@ import networkx
 
 # inspired from orange3 https://docs.orange.biolab.si/3/data-mining-library/reference/evaluation.cd.html
 def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, highv=None,
-                width=6, textspace=1, reverse=False, filename=None, **kwargs):
+                width=6, textspace=1, reverse=False, filename=None, labels=False, **kwargs):
     """
     Draws a CD graph, which is used to display  the differences in methods'
     performance. See Janez Demsar, Statistical Comparisons of Classifiers over
@@ -50,6 +50,8 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
             right (default: `False`)
         filename (str, optional): output file name (with extension). If not
             given, the function does not write a file.
+        labels (bool, optional): if set to `True`, the calculated avg rank
+        values will be displayed
     """
     try:
         import matplotlib
@@ -169,10 +171,10 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
     def text(x, y, s, *args, **kwargs):
         ax.text(wf * x, hf * y, s, *args, **kwargs)
 
-    line([(textspace, cline), (width - textspace, cline)], linewidth=0.7)
+    line([(textspace, cline), (width - textspace, cline)], linewidth=2)
 
-    bigtick = 0.1
-    smalltick = 0.05
+    bigtick = 0.3
+    smalltick = 0.15
     linewidth = 2.0
     linewidth_sign = 4.0
 
@@ -183,7 +185,7 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
             tick = bigtick
         line([(rankpos(a), cline - tick / 2),
               (rankpos(a), cline)],
-             linewidth=0.7)
+             linewidth=2)
 
     for a in range(lowv, highv + 1):
         text(rankpos(a), cline - tick / 2 - 0.05, str(a),
@@ -202,6 +204,8 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
               (rankpos(ssums[i]), chei),
               (textspace - 0.1, chei)],
              linewidth=linewidth)
+        if labels:
+            text(textspace + 0.3, chei - 0.075, format(ssums[i], '.4f'), ha="right", va="center", size=10)
         text(textspace - 0.2, chei, filter_names(nnames[i]), ha="right", va="center", size=16)
 
     for i in range(math.ceil(k / 2), k):
@@ -210,6 +214,8 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
               (rankpos(ssums[i]), chei),
               (textspace + scalewidth + 0.1, chei)],
              linewidth=linewidth)
+        if labels:
+            text(textspace + scalewidth - 0.3, chei - 0.075, format(ssums[i], '.4f'), ha="left", va="center", size=10)
         text(textspace + scalewidth + 0.2, chei, filter_names(nnames[i]),
              ha="left", va="center", size=16)
 
@@ -269,7 +275,7 @@ def form_cliques(p_values, nnames):
     return networkx.find_cliques(g)
 
 
-def draw_cd_diagram(df_perf=None, alpha=0.05):
+def draw_cd_diagram(df_perf=None, alpha=0.05, title=None, labels=False):
     """
     Draws the critical difference diagram given the list of pairwise classifiers that are
     significant or not
@@ -281,9 +287,17 @@ def draw_cd_diagram(df_perf=None, alpha=0.05):
     for p in p_values:
         print(p)
 
-    graph_ranks(average_ranks.values, average_ranks.keys(), p_values,
-                cd=None, reverse=True, width=9, textspace=1.5)
 
+    graph_ranks(average_ranks.values, average_ranks.keys(), p_values,
+                cd=None, reverse=True, width=9, textspace=1.5, labels=labels)
+
+    font = {'family': 'sans-serif',
+        'color':  'black',
+        'weight': 'normal',
+        'size': 22,
+        }
+    if title:
+        plt.title(title,fontdict=font, y=0.9, x=0.5)
     plt.savefig('cd-diagram.png',bbox_inches='tight')
 
 def wilcoxon_holm(alpha=0.05, df_perf=None):
@@ -364,6 +378,6 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
     # return the p-values and the average ranks
     return p_values, average_ranks, max_nb_datasets
 
-df_perf = pd.read_csv('example.csv',index_col=False)
+df_perf = pd.read_csv('DefaultvsTunedvsEnsembleCritDiffAcc.csv',index_col=False)
 
-draw_cd_diagram(df_perf=df_perf)
+draw_cd_diagram(df_perf=df_perf, title='Accuracy', labels=True)
