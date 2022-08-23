@@ -378,6 +378,7 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
     # return the p-values and the average ranks
     return p_values, average_ranks, max_nb_datasets
 
-df_perf = pd.read_csv('DefaultvsTunedvsEnsembleCritDiffAcc.csv',index_col=False)
+
+df_perf = pd.read_csv('example.csv', index_col=False)
 
 draw_cd_diagram(df_perf=df_perf, title='Accuracy', labels=True)
